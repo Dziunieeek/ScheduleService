@@ -1,12 +1,22 @@
 package pl.edu.agh.schedule;
 
-import java.util.HashMap;
+import java.util.Map;
 
 public class Event {
 
-    public HashMap<String, String> propertiesMap;
+    private Map<String, String> propertiesMap;
 
-    public Event(HashMap<String, String> map){
+    public Event(Map<String, String> map) {
         this.propertiesMap = map;
     }
+
+    public Map<String, String> getPropertiesMap() {
+        return propertiesMap;
+    }
+
+    public void setPropertiesMap(Map<String, String> propertiesMap) {
+        this.propertiesMap = propertiesMap;
+    }
+
+
 }

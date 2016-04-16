@@ -7,52 +7,61 @@ import net.fortuna.ical4j.model.Component;
 import net.fortuna.ical4j.model.Property;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 
 public class CalendarManager {
 
     private static final String EVENT_NAME = "VEVENT";
-    private static final String PROPERTY_NAME = "LOCATION";
+    private static final String PROPERTY_LOCATION_NAME = "LOCATION";
 
-    Calendar calendar = null;
-    FileInputStream fin = null;
-    CalendarBuilder builder = null;
+    private Calendar calendar;
+    private Map<String, String> deviceList = new HashMap<>();
 
     public CalendarManager() {
         try {
-            this.fin = new FileInputStream("src/main/resources/kalendarz.ics");
-            this.builder = new CalendarBuilder();
-            this.calendar = builder.build(this.fin);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParserException e) {
+            readCalendar();
+            readDeviceList();
+        } catch (IOException | ParserException e) {
             e.printStackTrace();
         }
     }
 
-    public ArrayList<Event> getEvents(String location) {
-        ArrayList<Event> list = new ArrayList<Event>();
+    private void readCalendar() throws IOException, ParserException {
+        CalendarBuilder builder = new CalendarBuilder();
+        this.calendar = builder.build(new FileInputStream("src/main/resources/kalendarz.ics"));
+    }
+
+    private void readDeviceList() throws IOException {
+        List<String> deviceData = Files.readAllLines(Paths.get("src/main/resources/baza.csv"));
+        for (String line : deviceData) {
+            String[] splitLine = line.split(",");
+            deviceList.put(splitLine[0], splitLine[1]);
+        }
+    }
+
+    public List<Event> getEventsByLocation(String location) {
+        List<Event> list = new LinkedList<>();
         for (Iterator i = calendar.getComponents().iterator(); i.hasNext(); ) {
             Component component = (Component) i.next();
             if (component.getName().equals(EVENT_NAME)) {
-                if (component.getProperty(PROPERTY_NAME).getValue().equals(location)) {
-                    HashMap<String, String> map = new HashMap<String, String>();
+                if (component.getProperty(PROPERTY_LOCATION_NAME).getValue().equals(location)) {
+                    Map<String, String> map = new HashMap<>();
                     for (Iterator j = component.getProperties().iterator(); j.hasNext(); ) {
                         Property property = (Property) j.next();
                         map.put(property.getName(), property.getValue());
                     }
-                    Event event = new Event(map);
-                    list.add(event);
+                    list.add(new Event(map));
                 }
             }
         }
         return list;
+    }
+
+    public List<Event> getEventsById(String id) {
+        return getEventsByLocation(deviceList.get(id));
     }
 
 }
